@@ -145,33 +145,46 @@ var is_string = function(variable)
  */
 var is_bool = function(variable)
 {
-  if(typeof variable === 'boolean'){
+    if(typeof variable === 'boolean'){
       return true;
     }
     return false;
 }
 /**
  * [is_object checks if variable is object or not]
- * @param  {*}  object [variable wanted to be checked]
+ * @param  {*}  variable [variable wanted to be checked]
  * @return {Boolean}
  */
-var is_object = function(object)
+var is_object = function(variable)
 {
-    if(typeof object === 'object'){
+    if(typeof variable === 'object'){
       return true;
     }
     return false;
 }
 /**
  * [is_array checks if the variable is array]
- * @param  {*}  arr [variable wanted to be checked]
+ * @param  {*}  variable [variable wanted to be checked]
  * @return {Boolean}
  */
-var is_array = function(arr){
-  if(Array.isArray(arr)){
+var is_array = function(variable)
+{
+    if(Array.isArray(variable)){
       return true;
     }
     return false;
+}
+/**
+ * [is_array checks if the variable is function]
+ * @param  {*}  variable [variable wanted to be checked]
+ * @return {Boolean}
+ */
+var is_function = function(variable)
+{
+    if(typeof variable === 'function'){
+      return true;
+    }
+    return false;   
 }
 /**
  * [array_merge merges two arrays such as PHP]
@@ -430,6 +443,95 @@ var dd = function ()
 
     throw "";
 }
+
+var func_call = function(fun, arg = null)
+{
+    if (is_function(fun)) {
+            fun(arg);
+    }
+    if (is_string(fun) && !JSONable(fun)) {
+        eval(fun);
+    }
+    if (is_string(fun)) {
+        fun = JSON.parse(fun);
+    }
+    if (is_array(fun)) {
+        for (let index in fun) {
+            if (is_function(fun[index])) {
+                fun[index](arg);
+                continue;
+            }
+            if (is_string(fun[index])) {
+                eval(fun[index]);
+            }
+        }
+    }
+}
+
+/**
+ * [request makes http request ]
+ * @param  {string} url       [valid url]
+ * @param  {type} type      [valid http method]
+ * @param  {object} callbacks [valid json that has callbacks]
+ *          -success
+ *          -failure
+ *          -waiting
+ * @param  {object} data      [valid json object or valid FormData object]
+ */
+var request = function(url, type, callbacks, data = {})
+{
+    if (!url || !is_string(url) || JSONable(url)) {
+        throw new Error('request function argument 1 must be valid string ... !');
+    }
+    if (!type || !is_string(type) || JSONable(type) || !in_array(type.toLowerCase(), ["get", "post", "put", "delete", "options"])) {
+        throw new Error('request function argument 2 must be valid request type ... !');
+    }
+    if (!callbacks || !is_object(callbacks)) {
+        throw new Error('request function argument 3 must be valid request type ... !');
+    }
+
+    if (!isset(callbacks.success)) {
+        throw new Error('request callbacks must has at least one success object  ... !');
+    }
+
+    if (!isset(callbacks.waiting)) {
+        let waiting = callbacks.waiting;
+        func_call(waiting);
+   }
+
+    $.ajax({
+        url: url,
+        type: type,
+        data: data,
+        async: false,
+        cache: false,
+        contentType: false,
+        processData: false,
+        success: function (data)
+        {
+            let success = callbacks.success;
+            func_call(success, data);
+        },
+        error: function(xhr, status, error)
+        {
+            if (!isset(callbacks.failure)) {
+                let failure = callbacks.failure;
+                func_call(failure, error);
+            }
+        },
+        complete: function()
+        {
+            if (!isset(callbacks.completed)) {
+                let completed = callbacks.completed;
+                func_call(completed);
+            }
+        }
+    });
+}
+
+
+
+
 /**
  * [removingEventListener removing an event emit function that attached to this element]
  * @param  {string} element       [Dom Element query selector]
@@ -444,9 +546,9 @@ var removingEventListener = function (element, event, function_name)
 
 // JavaScript program to get the function
 // name/values dynamically
-var getFunctionParams = function getFunctionParams(func) {
+var getFunctionParams = function (func) {
 
-    // String representaation of the function code
+    // String representation of the function code
     var str = func.toString();
 
     // Remove comments of the form /* ... */
