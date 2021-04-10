@@ -124,6 +124,7 @@ var function_exists = function(variable)
   }
   return false;
 }
+
 /**
  * [is_string checks if variable is string or not]
  * @param  {*}  variable [variable wanted to be checked]
@@ -132,6 +133,19 @@ var function_exists = function(variable)
 var is_string = function(variable)
 {
     if(typeof variable === 'string'){
+      return true;
+    }
+    return false;
+}
+
+/**
+ * [is_string checks if variable is boolean or not]
+ * @param  {*}  variable [variable wanted to be checked]
+ * @return {Boolean}
+ */
+var is_bool = function(variable)
+{
+  if(typeof variable === 'boolean'){
       return true;
     }
     return false;
