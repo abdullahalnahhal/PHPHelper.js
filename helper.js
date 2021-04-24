@@ -469,6 +469,17 @@ var func_call = function(fun, arg = null)
 }
 
 /**
+ * [collectFormFields collects form fields values and return it as FormData]
+ * @param {string} form [querySelector to select a form]
+ * @return {FormData}
+ */
+var collectFormFields = function(form)
+{
+    let formElement = document.querySelector(form);
+    let data = new FormData(formElement);
+    return data;
+}
+/**
  * [request makes http request ]
  * @param  {string} url       [valid url]
  * @param  {type} type      [valid http method]
@@ -581,4 +592,145 @@ var getFunctionParams = function (func) {
     });
 
     return params;
+}
+
+/**
+ * [range generates array of number into the range]
+ * @poaram start [start number to start the range]
+ * @poaram start [end number to start the range]
+ * @return array
+ */
+var range = function(start = null, end = null) {
+    if (end === null && start === null){
+        exception("Range must has at least one arg to be end ... ! ");
+    }
+
+    if (end === null){
+        end = start;
+        start = 0;
+    }
+    if (start > end){
+        exception("arg 1 must be less than arg 2 Integer ... ! ");
+    }
+
+    if (!Number.isInteger(start) || !Number.isInteger(end) || typeof start === NaN || typeof end === NaN){
+        exception("Both Arg 1 and Arg 2 Must be integers ... ! ");
+    }
+
+    var ans = [];
+    for (let i = start; i <= end; i++) {
+        ans.push(i);
+    }
+    return ans;
+}
+
+/**
+ * [current fetches the current page url]
+ *
+ * @returns {string}
+ * @example "http://www.website.com/page"
+ */
+function current()
+{
+    return window.location.href;
+}
+
+/**
+ * [getProtocol fetches the current web page protocol]
+ *
+ * @param {string|null} url [full page url]
+ * @example "https://www.website.com/page"
+ * @returns {string}
+ * @example "https"
+ */
+function getProtocol(url = null)
+{
+    if(!url){
+        url = current();
+    }
+
+    url = strtolower(url);
+
+    if(url.search("https") == 0){
+        return "https";
+    }
+    return "http";
+}
+
+/**
+ * [getDomain fetches the current web page domain]
+ *
+ * @param {string|null} url [full page url]
+ * @example "http://www.website.com/page"
+ * @returns {string}
+ * @example "www.website.com"
+ */
+function getDomain(url = null)
+{
+    if(!url){
+        url = current();
+    }
+
+    url = strtolower(url);
+    pre = getProtocol(url);
+    pre = pre+"://";
+    url = url.replace(pre, "");
+    url = explode("/", url);
+    url = url[0];
+
+    return url;
+}
+
+/**
+ * [baseUrl fetches the current web page base url]
+ *
+ * @param {string|null} url [full page url]
+ * @example "https://www.website.com/page"
+ * @returns {string}
+ * @example "https://www.website.com"
+ */
+function baseUrl(url = null)
+{
+    if(!url){
+        url = current();
+    }
+    protocol = getProtocol(url);
+    domain = getDomain(url);
+
+    url = protocol+"://"+domain;
+
+    return url;
+}
+
+/**
+ * [route returns the real url to a page]
+ *
+ * @param {string} page [real page path]
+ * @example "go/to/page/path/{inject1}/{inject2?}"
+ * @param {JSON} injections
+ * @example "{inject1:5, inject2:7}
+ */
+function route(page, injections = {})
+{
+    for (const key in injections) {
+        search = '{'+key+'\?}';
+        regex = new RegExp(search, "g");
+        page = page.replace(regex, injections[key]);
+        search = '{'+key+'}';
+        page = page.replace(regex, injections[key]);
+        delete injections[key];
+    }
+
+    regex = new RegExp('{\w+\?}\/*', "g");
+    page = page.replace(regex, '');
+    matches = page.match(/(?<=\{)\w+(?=\})/g);
+
+    if(!empty(matches)){
+        return exception('Route needs these these parameter : '+matches[0]);
+    }
+
+    url = baseUrl()+"/"+page;
+    url = serializeQS(url, injections);
+
+    return url
 }
