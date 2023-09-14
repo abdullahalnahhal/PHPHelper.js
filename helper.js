@@ -555,6 +555,12 @@ var removingEventListener = function (element, event, function_name)
     document.querySelector(element).removeEventListener(event, function_name);
 }
 
+var removeAllEventListner = function (element){
+    let elements = document.querySelectorAll(element);
+    for (const element of elements) {
+        element.replaceWith(element.cloneNode(true));
+    }
+}
 // JavaScript program to get the function
 // name/values dynamically
 var getFunctionParams = function (func) {
